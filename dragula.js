@@ -39,6 +39,9 @@ function dragula (initialContainers, options) {
   if (o.direction === void 0) { o.direction = 'vertical'; }
   if (o.ignoreInputTextSelection === void 0) { o.ignoreInputTextSelection = true; }
   if (o.mirrorContainer === void 0) { o.mirrorContainer = doc.body; }
+  if (o.getMirror === void 0) { o.getMirror = function(item) { return item.cloneNode(true); } ; }
+  if (o.getCopy === void 0) { o.getCopy = function(item) { return item.cloneNode(true); } ; }
+  if (o.getDropItem === void 0) { o.getDropItem = function(item) { return item.cloneNode(true); } ; }
 
   var drake = emitter({
     containers: o.containers,
@@ -203,7 +206,7 @@ function dragula (initialContainers, options) {
 
   function start (context) {
     if (isCopy(context.item, context.source)) {
-      _copy = context.item.cloneNode(true);
+      _copy = o.getCopy(context.item);
       drake.emit('cloned', _copy, context.item, 'copy');
     }
 
@@ -261,7 +264,10 @@ function dragula (initialContainers, options) {
     if (isInitialPlacement(target)) {
       drake.emit('cancel', item, _source, _source);
     } else {
-      drake.emit('drop', item, target, _source, _currentSibling);
+        var freshItem = o.getDropItem(item);
+        target.insertBefore(freshItem,item);
+        remove();
+        drake.emit('drop', freshItem, target, _source, _currentSibling);
     }
     cleanup();
   }
@@ -427,7 +433,7 @@ function dragula (initialContainers, options) {
       return;
     }
     var rect = _item.getBoundingClientRect();
-    _mirror = _item.cloneNode(true);
+    _mirror = o.getMirror(_item);
     _mirror.style.width = getRectWidth(rect) + 'px';
     _mirror.style.height = getRectHeight(rect) + 'px';
     classes.rm(_mirror, 'gu-transit');
